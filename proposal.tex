@@ -1,0 +1,88 @@
+\documentclass{article}
+% Catheter to guidewire
+
+\usepackage[english]{babel}
+\bibliographystyle{vancouver}
+
+% Set page size and margins
+% Replace `letterpaper' with `a4paper' for UK/EU standard size
+\usepackage[letterpaper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+% Useful packages
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+\title{Project Proposal: Real-Time 3D detection and localization of guide-wire using MRI for CathBot platform }
+\author{Martin Reinok}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+% Risk of infection
+Cardiovascular diseases remain as a predominant cause of global mortality, motivating the exploration of alternative medical interventions to open surgery, which has higher odds of mortality and complications. An viable alternative has been endovascular operation, which primary benefit is faster recovery due to the minimally invasive approach. Normally, the endovascular operation is performed with the help of Computed Tomography (CT) imaging, which involves the use of x-rays - a form of ionizing radiation that increases the risk of cancer. An alternative to CT is the use of Magnetic Resonance Imaging (MRI) technology, which is more expensive to use, but does not involve any ionizing radiation and has the potential for better quality imaging compared to CT. The CathBot project \cite{cathbot} proposes MR-safe teleoperation platform to manipulate endovascular instrumentation remotely and to provide operators with haptic feedback for endovascular tasks. This project focuses on implementing guide-wire detection under MRI for CathBot operation, and the integration of safety layers to ensure optimal guide-wire guidance and patient protection. The safety layers will be integrated on the CathBot using haptic feedback capabilities, which inform the operator of potential issues.
+
+% \begin{enumerate}
+%    \item Why MRI
+%    \item What is endovascular operation
+%    \item How CathBot is useful for endovascular operation
+%    \item How this project benefits CathBot
+% \end{enumerate}
+
+\section{Project Plan}
+This project focuses on integrating CathBot robotic platform with novel computer vision software, which is able to search and detect an endovascular guide-wire and eventually provide feedback to the operator of the CathBot. The feedback will be in form of haptic feedback via the Master Device of CathBot \cite{cathbot}.
+This project will be developed in distinct phases:
+\begin{itemize}
+    \item Literature review 
+    \item Susceptibility artifact detection
+    \item Search and control algorithm to map guide-wire in 3D space using MRI imaging and Siemens provided interface
+    \item 3D anatomy mapping
+    \item Developing feedback algorithm based on guide-wire positioning and movement
+\end{itemize}
+The following chapters will describe the phases in more detail.
+
+%\subsection{Research}
+%As expected, each of the phases mentioned above will be researched individually
+%\begin{itemize}
+%    \item guide-wire and susceptibility artifacts
+%    \item Implementing and training a CNN
+%    \item Search algorithms for finding guide-wire from MRI images
+%    \item 3D anatomy mapping
+%\end{itemize}
+\subsection{Literature Review}
+
+
+\subsection{Artifact Detection}
+\label{artifact_detaction}
+In this phase, training data for a CNN will be either created or manually annotated from images. The creation of training data involves mathematically recreating a susceptibility artifact in 3D-space, which resembles the real artifact visible with MRI \cite{sim_of_suscept_artifact}. If this is not feasible or possible, the artifacts will be manually extracted from existing images with the guide-wire.
+A CNN will be trained with this data and used to find artifacts from real-time MRI session. Different computer vision approaches aside to CNN could be attempted, e.g. template matching. Additionally, detection system can be improved by implementing pre-known variables such as the distance between two artifacts on the guide-wire.
+
+If successful, the outcome of this phase is software component that is capable of stable and accurate guide-wire detection from MRI images.
+
+\subsection{Search and MRI Control to find and map the guide-wire}
+\label{mri_search_control}
+In this phase, the Siemens interface will be used to develop a program which is capable of controlled movement of the MRI plane parallel with $b_0$ magnetic field. Rotation of the MRI plane parallel to the $b_0$ and changing the slice thickness will be implemented as well, to improve speed of detection and improve contrast after the guide-wire has been detected. 
+
+If successful, the outcome of this phase is software component which in collaboration with the software component from \ref{artifact_detaction}, is able to move MRI plane in Axial axis, as well as change the thickness of MRI plane, to localize and map the position of the guide-wire in 3D space, relative to the MRI machine. Future considerations may involve tracking the guide-wire based on CathBot Master Device inputs, in collaboration with the software from \ref{feedback_algorithm}.
+
+\subsection{3D anatomy mapping}
+\label{anatomy_mapping}
+In this phase, existing datasets and tools will be implemented, to digitally map the anatomy scanned using the MRI scanner. Initially, the recreation will focus solely on the heart phantom(s) available at RaM. If possible, the 3D recreation will be extended to work on any compatible body-part or phantom object scanned with the MRI.
+For the purpose of this assignment, existing tools such as Slicer\cite{slicer} or Freesurfer\cite{freesurfer} (both open-source), or Mimics\cite{mimics} (closed-source) will be used, as developing a novel reconstruction method might not be viable due to the time constraint of this project.
+
+If successful, the outcome of this phase is software component which is capable of creating a 3D-representation of the heart phantom, relative to the MRI coordinate space.
+
+\subsection{CathBot feedback algorithm}
+\label{feedback_algorithm}
+In this phase, a software-based safety layer is implemented on the CathBot, which combines all the software components above (\ref{artifact_detaction}, \ref{mri_search_control} and \ref{anatomy_mapping}) to give the operator of the Master Device more information regarding the positioning of the guide-wire, as well as imposing preventative measures to avoid damaging the patient. 
+
+Using the software components \ref{artifact_detaction} and \ref{mri_search_control}, the MRI can be made to autonomously follow the tip of the guide-wire during an operation, which is one of the more important elements to a doctor performing the operation. Additionally, the Master Device can give haptic feedback to the operator, when the tip or any other visible guide-wire part, is dragging or touching the wall of a blood vessel, which could be harmful to the patient. A guide-wire overview/check algorithm could be developed for the purpose of checking the entire guide-wire positioning, to detect any collisions or unwanted bends along the guide-wire. This would break the flow of the program and scan along the guide-wire, eventually returning to the tip.
+
+If successful, the outcome of this phase is an extension or plugin to CathBot, which, if enabled, will give feedback to the operator using the Master Device, in case the guide-wire is colliding with a wall of a blood vessel.
+Additionally, the operator commands from CathBot Master Device can be used as additional inputs for the control algorithm developed in \ref{mri_search_control}, to predict the next position of guide-wire.
+
+\bibliographystyle{alpha}
+\bibliography{references}
+
+\end{document}
