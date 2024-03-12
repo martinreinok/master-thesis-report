@@ -19,22 +19,25 @@
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
 
-\title{Real-Time Detection of Passive MRI Guidewire for Endovascular Intervention}
+\title{Automated Passive Tracking for MR-guided Endovascular Interventions}
 
-\author{\IEEEauthorblockN{1\textsuperscript{st} Martin Reinok}
-\IEEEauthorblockA{\textit{Embedded Systems ??} \\
+\author{\IEEEauthorblockN{Martin Reinok}
+\IEEEauthorblockA{\textit{Robotics and Mechatronics Group,}\\
+\textit{Faculty of EEMCS} \\
 \textit{University of Twente}\\
 Enschede, Netherlands \\
 m.reinok@student.utwente.nl}
 \and
-\IEEEauthorblockN{2\textsuperscript{nd} Giulio Dagnino}
-\IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
+\IEEEauthorblockN{Giulio Dagnino}
+\IEEEauthorblockA{\textit{Robotics and Mechatronics Group,}\\
+\textit{Faculty of EEMCS} \\
 \textit{University of Twente}\\
 Enschede, Netherlands \\
 g.dagnino@utwente.nl}
 \and
-\IEEEauthorblockN{3\textsuperscript{rd} Wyger Brink}
-\IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
+\IEEEauthorblockN{Wyger Brink}
+\IEEEauthorblockA{\textit{Magnetic Detection and Imaging Group,}\\
+\textit{Technical Medical Centre} \\
 \textit{University of Twente}\\
 Enschede, Netherlands \\
 w.m.brink@utwente.nl}
@@ -43,53 +46,21 @@ w.m.brink@utwente.nl}
 \maketitle
 
 \begin{abstract}
-Vascular and cardiac interventions often rely on X-ray fluoroscopy for real-time imaging guidance, which poses risks due to ionizing radiation exposure. Magnetic resonance imaging (MRI) offers a safer alternative with superior soft tissue contrast, but its adoption for real-time guidance has been limited by technical challenges. This paper presents a novel approach for real-time detection of passive MRI guidewires during endovascular interventions, addressing key limitations of MRI guidance. A convolutional neural network (CNN) is trained using a procedurally generated dataset to detect susceptibility artifacts in a MR-safe guidewire. The CNN output is integrated into a software system that provides automatic guidewire tracking and MRI slice alignment, enabling real-time visualization of the scan plane, detected guidewire, and patient anatomy. Experimental results demonstrate the effectiveness of the proposed approach in accurately detecting passive guidewires in a phantom, under varying imaging conditions. The system shows promise in improving the safety, efficiency, and accuracy of MRI-guided interventions.
+Vascular and cardiac interventions often rely on X-ray fluoroscopy for real-time imaging guidance, which poses risks due to ionizing radiation exposure. MRI offers a safer alternative with superior soft tissue contrast and avoids using ionizing radiation, but its adoption for near real-time guidance so far has been limited by technical challenges. This paper presents a novel approach for real-time detection and tracking of an MR-visible guidewire with discrete markers during endovascular interventions, addressing key limitations. A series of experiments was designed to evaluate and
+optimize marker visibility in terms of contrast-and-noise for different sequences. A convolutional neural network (CNN) is trained to detect the marker artefacts using a physics-based marker model and evaluated experimentally in an aortic phantom. The physics-based model simulation is used to generate the dataset without the need for MRI imaging, or manually annotating dataset for training the CNN model. The output from the CNN model is integrated into a custom software interface that links the tracked markers to automatic MRI slice geometry alignment, enabling near real-time guidewire tracking. Experimental results evaluate the effectiveness of the proposed approach in detecting the guidewire under varying imaging conditions, showing promise in improving the safety, efficiency, and accuracy of MR-guided interventions.
 \end{abstract}
 
 \begin{IEEEkeywords}
-MRI-guided interventions, passive guidewire detection, susceptibility artifacts, endovascular intervention, image-guided procedures
+MRI-guided interventions, passive tracking, susceptibility artefacts, endovascular interventions
 \end{IEEEkeywords}
 
 \section{Introduction}
-Vascular and cardiac ailments continue to be significant contributors to illness and death rates. X-ray fluoroscopy is widely used form of therapy for this type of diseases. The navigation of endovascular catheters during interventions often requires the use of image guidance. While X-ray is currently the preferred modality for real-time imaging due to its commendable spatial and temporal resolution, it has notable drawbacks including exposure to ionizing radiation for patients and medical personnel, and limited soft tissue characterization.
+Cardiovascular diseases continue to be the leading cause of death in the world, representing 32 \% of the global deaths \cite{webcardio}. Image-guided endovascular intervention forms the current clinical standard in treatment, with a reduced risk of complications and shorter recovery time compared to open surgery \cite{Jung2018}. While X-ray fluoroscopy is currently the preferred modality for real-time imaging due to its commendable spatial and temporal resolution, it has notable drawbacks including limited soft tissue characterization and exposure to ionizing radiation for patients and medical staff. As an alternative to fluoroscopy, MRI provides excellent soft-tissue contrast, is capable of imaging in an arbitrary slice orientation and completely free of ionizing radiation. Both clinical and experimental studies conducted using MRI have demonstrated its potential in various interventional procedures, including the delivery of Atrial Septal Defect (ASD) closure, placement of aortic valves and endovascular stents \cite{pmid21359519}.
 
-Magnetic resonance imaging (MRI) has been introduced as a promising alternative. Both clinical and experimental studies conducted using MR fluoroscopy have demonstrated its effectiveness in various procedures, including the delivery of ASD closure, aortic valves, and endovascular stents (such as those used in the aortic, carotid, iliac, renal arteries, and inferior vena cava) \cite{pmid21359519}. Contrary to fluoroscopy, MRI provides high soft-tissue contrast, three-dimensional data and avoids exposure to ionizing radiation. 
+Despite these benefits, MRI has a number of drawbacks that limit its application during interventional procedures. These include the relatively low spatio-temporal resolution, difficulties in device visibility, intermittent manual slice alignment hampering the procedure, as well as safety considerations related to device heating \cite{pmid35420239}. MRI in general involves a trade-off between spatial resolution, signal-to-noise ratio (SNR) and acquisition time. Even though the spatial resolution can potentially compare to that of X-ray fluoroscopy, the associated acquisition time makes that real-time capabilities drop significantly \cite{Green2005}. Introduction of a sliding window technique allowed initial implementations to already reach frame rates of up to 30 Hz which is close to on-par with fluoroscopy, albeit at the cost of image quality \cite{pmid3173063}. %In most interventional procedures, an imaging frame rate of 2-3 Hz may also be considered acceptable compromise between spatial/temporal resolution. 
 
-However despite the benefits, MRI has it's shortcomings, which have suppressed it from becoming the preferred modality for procedures. Most notably, the following issues have been highlighted to be significant from clinical trials \cite{pmid35420239}:
-\begin{itemize}
-    \item Low temporal/spatial resolution
-    \item Guidewire/catheter visibility
-    \item Safety (device visibility)
-    \item Manual MRI slice alignment
-\end{itemize}
-MRI in general must balance a tradeoff between resolution, signal-to-noise ratio (SNR) and repetition time (TR). Even though the spatial resolution can be increased very high, resulting in image quality that even surpasses x-ray, the repetition time will increase and therefore also real-time capabilities will drop significantly. Introduction of sliding window technique allowed MRI to reach real-time frame rates, up to 30 Hz \cite{pmid3173063}. While this is close to on-par with X-ray, the temporal/spatial resolution of such sequences is not great. In this study, real-time target of 3 Hz imaging is focused, which provides sufficient spatial/temporal resolution, with reasonable latency. 
-
-To counter the device visibility issues, there are primarily two options produced by companies: active and passive. Active devices have improved visibility, but introduce additional complexity and may pose safety concerns, whereas passive devices do not require external power sources and rely on the embedding of magnetic nanoparticles for visibility. In this study, we focus exclusively on passive devices. There are many commercial options for passive devices, some examples include MaRVis\cite{marvistech-guidewires}, Nano4Imaging\cite{nano4imaging-guidewires} and EPflex \cite{epflex-guidewires}, all using markers caused by \(B_0\) field inhomogeneities, to enhance the visibility during MRI scans.
+In terms of device visibility either active and passive tracking can be considered for MR-guided endovascular procedures. Active tracking involves integrating a miniaturized RF receive coil and associated electronics into the device, producing a strong localized receive intensity that can be localized very efficiently using dedicated tracking sequences \cite{pmid11146480}. Passive  tracking, on  the  other  hand, is based on embedding a small magnetic susceptibility marker into the device, such as iron oxides or stainless steel, which produces a localized static magnetic field distortion and associated susceptibility artefact when imaged. \autoref{fig:xray-vs-mri-guidewire-comparison} compares the visibility of a guidewire under fluoroscopy and MRI. Although the conspicuity of this artefact depends on MRI acquisition settings, an adequate spatial-temporal resolution can generally be achieved by using fast gradient-echo based sequences \cite{pmid11146480}. Devices suited for passive tracking may be less costly to produce and involve fewer safety concerns as there are no electrical interconnections required to the MR system. Downsides include potential out-of-plane motion and manual readjustment of the acquisition settings by the external operator, which hampers the interventional procedure.
 % \textbf{TODO: What has been done in literature to fix these problems}
-
-Here we propose a work-in-progress design of a software integration layer for a MRI system, which is capable of detecting MR-safe passive endovascular guidewire from real-time (interactive) equivalent MR sequences. The detection is achieved by using a Convolutional Neural Network (CNN), using a procedural-generated dataset, to avoid manual annotation and MR imaging. The software provides detection, an ad-hoc guidewire tracking algorithm, automatic slice alignment to track the passive guidewire, and future possibility for 3D visualization of the scan plane and detected guidewire relative to the patient.
-
-The proposed software aims to provide a comprehensive solution for MR-guided interventions, by improving the safety, efficiency, and accuracy.
-% \textbf{TODO: What we propose and how does it help}
-
-\section{Methods}
-
-\subsection{TODO: MRI settings}\label{MRI-settings}
-
-\begin{itemize}
-    \item bSSFP
-    \item Voxel size: 1.2 - 1.4
-    \item TR: 470 ms
-    \item TE: 1.5 ms
-    \item 256 matrix
-    \item 
-\end{itemize}
-Comparison of GRE + bSSFP + slice thickness.
-A series of experiments was designed to optimize marker visibility and detection.
-Settings, explanations, fine-tuning.
-
-\subsection{Susceptibility Artifact Simulation}\label{artifact-simulation}
-The endovascular devices used for fluoroscopy are commonly made of nitinol (nickel-titanium), a material that does not create a signal under MRI, and is not visible. To combat this, the devices have been incorporated with paramagnetic markers, usually made of gadolinium or iron. These markers create localized distortions, known as susceptibility artifacts, under MRI and make the guidewire partially visible. \autoref{fig:xray-vs-mri-guidewire-comparison} demonstrates the difference between X-ray and MRI device visibility. 
 
 \begin{figure}[h]
     \centering
@@ -103,32 +74,62 @@ The endovascular devices used for fluoroscopy are commonly made of nitinol (nick
         \includegraphics[width=\textwidth]{Conference/img/mri-device-visibility.jpg}
         \subcaption*{(b)}
     \end{minipage}\hfill \hspace*{0cm}
-    \caption{Comparison of endovascular device visibility under x-ray(a) and MR (b).}
+    \caption{Coronal images of silicone phantom comparing endovascular device visibility under (a) X-ray fluoroscopy and (b) MRI.}
     \label{fig:xray-vs-mri-guidewire-comparison}
 \end{figure}
 
-Active tracking is also an option for MR tracking, which employ electronics and RF coils in the tip of the guidewire, which makes it stand out in the image. Their long-term usage is limited due to the fact that it involves electrical leads and might raise safety concerns \cite{pmid11146480}. Passive  tracking,  on  the  other  hand,  yields  acquisition-dependent  results  and  does  not generally  offer  adequate spatial-temporal resolution \cite{pmid11146480}.
+In this study, we evaluate a novel automated approach to passive tracking which involves detecting the passive markers carried by an endovascular guidewire from a real-time MR image datastream and adjusting the slice geometry accordingly. Robust detection is achieved efficiently using a physics-informed CNN, which avoids extensive manual annotation of training data. After detection, dynamic behaviour of the markers is identified followed by automatic slice alignment to track the guidewire. The proposed approach aims to provide a comprehensive and cost-effective solution for MR-guided interventions.
+% \textbf{TODO: What we propose and how does it help}
 
-The guidewire used in this paper, and demonstrated in \autoref{fig:xray-vs-mri-guidewire-comparison} (b) is EPflex MRline, a guidewire designed for MR interventions \cite{epflex-guidewires}.
+\section{Methods}
 
-The embedded paramagnetic markers in passive guidewires create small local magnetic distortion artifacts, which are mathematically well defined. The in-homogeneous part of the field distortion outside the particle is described by a dipole, as given by \cite{pmid14523965}:
+\subsection{MRI system and protocol}\label{MRI-settings}
+
+% any idea on the molarity of the MnCl2 solution?
+% It was 0.018g MnCl2, 2000ml h2o (distilled)
+All MR data was acquired on a 1.5T MRI system (\text{MAGNETOM} Aera, Siemens Healthineers, Erlangen, Germany) using an 18-channel torso RF coil and a 24-channel spine RF coil. An abdominal aortic aneurysm phantom made from silicone was modified to enable guidewire access \cite{pmid28689483} and the lumen compartment was filled with a 72 $\mu$M MnCl$_2$ blood-mimicking solution ($T_1 = 770$ ms and $T_2 = 200$ ms) while the outer compartment was filled with tapwater. The study is guided by an MR-visible guidewire which incorporates discrete passive markers (MRLine, EPflex, Dettingen an der Erms, Germany), resulting in local image artefacts as shown in \autoref{fig:xray-vs-mri-guidewire-comparison} (b).
+
+A series of experiments was designed to evaluate and optimize marker visibility. Following earlier studies \cite{pmid3173063}, \cite{pmid16683261} we have evaluated both two-dimensional (2D) gradient-recalled-echo (GRE) and balanced steady-state free precession (bSSFP) sequences for a series of slice thicknesses. Apart from the parameters that affect mainly the spatial-temporal resolution of the sequence, such as number of phase encoding steps and time-of-repetition (TR), the slice thickness affects both the image SNR as well as conspicuity of the marker artefact and robustness with respect to out-of-place movement. A higher slice thickness may improve SNR but reduce the marker contrast due to partial volume effects. A thinner slice, on the other hand, can improve the marker contrast but may complicate the tracking performance due to out-of-plane movement of the markers. A suitable trade-off will help improve tracking performance.
+
+The sequence parameters used in the optimization are listed in \autoref{table_MRI_parameters}. The starting point for the optimization was to acquire a field-of-view (FOV) of 350 mm within approximately 500 ms to enable smooth procedural imaging. The slice thickness was varied from 2.5 up to 30 mm to compare its influence on marker contrast-to-noise ratio (CNR), defined as the difference in mean signal at the marker location with respect to the surrounding lumen, divided by the standard deviation of background noise. Finally, for both sequences a minimum time-of-repetition (TR) and echo-time (TE) was enforced to minimize scan time and maximize the attainable in-plane spatial resolution.
+
+\begin{table}[ht]
+\centering
+\caption{MR sequence optimization}
+\label{table_MRI_parameters}
+\begin{tabular}{|l|l|l|}
+    \hline & GRE & bSSFP \\
+    \hline FOV & 350 & 350 \\
+    \hline in-plane resolution [mm] & 1.4  & 1.4 \\
+    \hline slice thickness [mm] & 2.5 - 30 & 2.5 - 30 \\
+    \hline TR [ms] & 674  & 484 - 471 \\
+    \hline TE [ms] & 1.99 & 1.49 \\
+    \hline tip angle [\textdegree] & 15 & 50  \\
+    \hline
+\end{tabular}
+\end{table}
+
+\subsection{Susceptibility artefact model}\label{artefact-simulation}
+
+The paramagnetic markers embedded on the guidewire create small local magnetic field distortions, which can be mathematically described as a magnetic dipole, as given by \cite{pmid14523965}:
 
 \begin{equation}
 \label{eq:dipole-field-distortion}
-B_z = c \cdot \frac{(x^2 + y^2 - 2z^2)}{(x^2 + y^2 + z^2)^{\frac{5}{2}}}\text{, where } c = \frac{B_0 \cdot \Delta{\chi} V}{4 \pi}
+B_z = \frac{B_0 \cdot \Delta{\chi} V}{4 \pi} \cdot \frac{(x^2 + y^2 - 2z^2)}{(x^2 + y^2 + z^2)^{\frac{5}{2}}}
 \end{equation}
 
-Here, \(B_0\)(T) is the main magnetic field, \(\Delta{\chi}\) is the susceptibility difference between the marker material and the surrounding tissues, and \(V\) is the volume of the paramagnetic material. \(x\), \(y\) and \(z\) represent the spatial coordinates.
+Here, $B_0$ is the main magnetic field, $\Delta{\chi}$ is the susceptibility difference between the marker material and the surrounding tissues, $V$ is the volume of the paramagnetic material and $x$, $y$ and $z$ represent the spatial coordinates.
 
-The simulation of \eqref{eq:dipole-field-distortion} is shown in \autoref{fig:simulations}(a). To simulate the signal of the coronal magnitude of a realistic artifact, integration over the slice thickness is necessary \cite{pmid14523965}:
+An example simulation of \eqref{eq:dipole-field-distortion} is shown in \autoref{fig:simulations}(a). To transform this magnetic field distortion into the image artefact in a coronal magnitude image, integration over the slice thickness is necessary \cite{pmid14523965}:
 
 \begin{equation}
 \label{eq:integration-over-slice-formula}
 S_{coronal} = \int_{-d/2}^{d/2} {\rho}(x,y,z) \exp(-i\gamma B_z TE) \,dz
 \end{equation}
 
-Here, \(\rho (x,y,z)\) is the signal producing spin density. Assuming uniform spin density, \(\rho (x,y,z)\) is taken as 1. \(d\) is the slice thickness, \(\gamma\) (Hz/T) is gyromagnetic ratio and \(TE\) the echo time. Simulation of \eqref{eq:integration-over-slice-formula} results in \autoref{fig:simulations}(b).
+Here, $\rho (x,y,z)$ is the spin density, $d$ is the slice thickness, $\gamma$ (Hz/T) is gyromagnetic ratio ($^1\text{H}$) and $TE$ the echo time. Simulation of \eqref{eq:integration-over-slice-formula} results in \autoref{fig:simulations}(b).
 
+% the dipole field distortion looks phase-wrapped, the B0 field distortion should be consistently increasing as you get closer to the dipole center. Please check
 \begin{figure}[h]
     \centering
     \begin{minipage}{0.241\textwidth}
@@ -141,25 +142,35 @@ Here, \(\rho (x,y,z)\) is the signal producing spin density. Assuming uniform sp
         \includegraphics[width=\textwidth]{Conference/img/coronal-magnitude-simulation.png}
         \subcaption*{(b)}
     \end{minipage}\hfill \hspace*{0cm}
-    \caption{(a) Dipole Field Distortion,
-    (b) Simulated Coronal Magnitude.}
+    \caption{(a) Example dipole field distortion,
+    (b) simulated coronal magnitude.}
     \label{fig:simulations}
 \end{figure}
 
-\subsection{Procedural Artifact Dataset for CNN}\label{artifact-cnn-dataset}
-To avoid manual annotation of susceptibility artifacts, and also having to take many images with the MRI, an alternative procedural method is presented. The generated susceptibility artifact is first masked by it's signal value, resulting in a segmentation truth mask. The generated artifact is then superimposed on existing MRI images. The scale, contrast and the number of artifacts on image are augmented withing a reasonable range, increasing variability, detection under multiple slice thicknesses and the overall CNN robustness.
+\subsection{CNN-based marker detection}\label{training-cnn}
 
-A dataset of 26 background images was used, which included images of aneurysm phantom, images of heart from online dataset and plain background images with variable noise and resolution. A region of interest was chosen for each image, to limit the placement range of artifacts (\autoref{fig:background-dataset}). The placement of artifacts was further restricted to be a minimum distance from other already placed markers. That is to avoid overlapping, which is not feasible in real tests.
+For training the CNN to detect susceptibility artefacts, we utilized a nnUNet framework which provides a robust infrastructure for medical image segmentation tasks \cite{pmid33288961}. The training process was conducted using the following specifications (configured automatically by nnUNet):
+\begin{itemize}
+    \item \textbf{Features}: 32.
+    \item \textbf{Convolutions}: 2, for both encoder and decoder.
+    \item \textbf{Kernel Sizes}: Pooling: $2 \times 2$, and convolutional layers: $3 \times 3$.
+    \item \textbf{Image size}: (upsampled) $512 \times 512$ pixels
+\end{itemize}
 
-% \textbf{TODO: MRI Sequence Settings!}
+\subsection{Physics-based dataset augmentation}\label{artefact-cnn-dataset}
+
+To increase the diversity of training data and avoid time-consuming manual annotation of susceptibility artefacts, an alternative physics-based approach is presented. The generated susceptibility artefact is first masked by it's signal value, resulting in a ground truth mask. The generated artefact is then superimposed on existing MRI images by means of pixel-wise multiplication. The size, contrast and the number of artefacts on the image are augmented within a suitable range, reflecting realistic variations in data.
+
+A dataset of 26 background images was used, which included phantom MR images, in-vivo cardiac MR images from an online database \cite{pmid29994302} and plain background images with variable noise and resolution, examples shown in \autoref{fig:background-dataset}. A region of interest was chosen for each image, to limit the placement range of artefacts. In order to avoid overlapping marker artefacts, the placement of additional artefacts was further restricted to satisfy a minimum distance in between markers. An example of the generated image, with corresponding ground truth mask is shown in \autoref{fig:generated-dataset-and-truth}.
+
+% \textbf{TODO: MRI sequence settings!}
 
 \begin{figure}
     \centering
     \includegraphics[width=1\linewidth]{Conference//img/roi-example-background-dataset.png}
-    \caption{Example of background dataset with a red box, where markers can be procedurally placed (Heart dataset \cite{pmid29994302}).}
+    \caption{Examples of background images with a red rectangle deliniating the region where physics-based marker artefacts are synthetically introduced.}
     \label{fig:background-dataset}
 \end{figure}
-
 
 \begin{figure}[h]
     \centering
@@ -173,52 +184,63 @@ A dataset of 26 background images was used, which included images of aneurysm ph
         \includegraphics[width=\textwidth]{Conference/img/generated-image-truth.png}
         \subcaption*{(b)}
     \end{minipage}\hfill \hspace*{0cm}
-    \caption{(a) Procedurally generated dataset image,
-    (b) Matching CNN truth mask.}
+    \caption{(a) Physics-based synthetically generated dataset image,
+    (b) corresponding ground truth mask.}
     \label{fig:generated-dataset-and-truth}
 \end{figure}
 
-\subsection{Training CNN}\label{training-cnn}
-For training the CNN to detect susceptibility artifacts, we utilized the nnUNet framework, which provides a robust infrastructure for medical image segmentation tasks. The training process was conducted using the following specifications (configured automatically by nnUNet):
-
+\subsection{Dynamic tracking}\label{guidewire-tracking}
+In MRI-guided interventions, real-time tracking of the passive guidewire is essential for accurate device navigation, as well as automatic MRI slice movement to guidewire. However, there are many inherent challenges:
 \begin{itemize}
-    \item \textbf{Features}: 32.
-    \item \textbf{Convolutions}: 2, for both encoder and decoder.
-    \item \textbf{Kernel Sizes}: Pooling: \(2 \times 2\), and convolutional layers: \(3 \times 3\).
-    \item \textbf{Image size}: (upsampled) 512x512px
+    \item The guidewire can move out-of-plane;
+    \item A low SNR can negatively impact detection performance;
+    \item CNN can produce false positives;
+    \item Flow artefacts and transient effects may impair the marker visibility.
 \end{itemize}
 
-\subsection{Guidewire Tracking}\label{guidewire-tracking}
-In MRI-guided interventions, real-time tracking of the passive guidewire is essential for accurate device navigation, as well as automatic MRI slice movement to guidewire. However, there are many inherent challenges posed by the described MRI and CNN combination:
-\begin{itemize}
-    \item Guidewire can enter and exit MRI slice. (visibility)
-    \item Low signal-to-noise ratio (SNR) can negatively impact CNN with very fast repetition time sequences.
-    \item CNN can have false positives.
-    \item Flow artifacts caused by guidewire- and blood movement impact susceptibility artifact visibility (blurring, ghosting, loss of SNR).
-\end{itemize}
+To address these challenges, a dynamic tracking algorithm was developed, tailored to differentiate the movement of the guidewire from noise or false-positive CNN outputs. The tracking algorithm operates in conjunction with the CNN and can guide adjustments in the MRI imaging plane, to match the movement of guidewire. The algorithm takes the CNN output as input after applying a median filter to remove noise. This step removes the majority of false positives, which are usually small and localized in nature. The remaining outputs of the CNN are considered to be valid susceptibility artefacts and are continuously tracked by means of automated labeling. There could however still be false positives, as any paramagnetic inhomogeneity such as air or metal implants will create a susceptibility artefact similar to those produced by the guidewire \cite{pmid22162977}. However, those false positives are static in nature and stay in one position, as opposed to the guidewire which is in movement.
 
-To address these challenges, an ad-hoc tracking algorithm was developed, tailored for separating and tracking the movement of guidewire from potentially noisy and unpredictable CNN output. The algorithm operates in conjunction with the CNN and is capable of moving the MRI plane in two axis, to match the movement of guidewire.
+To differentiate the artefacts produced by the static background from those produced by the guidewire, an approach is used which combines euclidean distance-based matching with linear trajectory prediction. The algorithm maintains a list of tracked locations stored as trackers, each associated with a detected artefact. In each frame, each tracker location is updated based on the detected artefacts in that frame and the one preceding. When an artefact is not found within a specified euclidean distance for more than a predefined number of frames, it is considered lost and removed from the list of active trackers. This allows for smooth continuous tracking where some markers can temporarily disappear and re-appear, while removing false positives.
 
-The algorithm takes the binary image from CNN output as input and applies median blur with threshold to remove any noise and low-probability detections. This will remove the majority of false positives, which are usually salt-style noise. The remaining blobs are considered to be susceptibility artifacts and are continuously tracked. There could still be false positives, as any paramagnetic sphere-like object will create a susceptibility artifact similar to those of the guidewire. For instance metallic fixation screws in the tibia, which create nearly identical susceptibility artifacts \cite{pmid22162977}. However, those false positives should stay in one position, as opposed to the guidewire which is in movement. The algorithm takes this into account to further separate guidewire from the rest.
-
-To track the artifacts, an approach is used which combines Euclidean distance-based matching with linear trajectory prediction. The algorithm maintains a list of active trackers, each associated with a detected artifact. In each frame, each tracker updates it's position based on the detected artifacts in that frame. If associated artifact is not found within specified euclidean distance for more than a predefined threshold of frames, it is considered lost and removed from the list of active trackers.
-
-To estimate and predict the movement of guidewire, each tracker has a initial position and a updated latest position for each frame. The difference of each initial and updated position from the trackers is averaged, while differences of insignificant amount are not considered (e.g. fixation screws). This results in a movement vector which can be predicted linearly for the next frame. Using the movement vector, either predicted or not, the MRI slice can be moved, to motion track the guidewire. 
+To estimate and predict the movement of guidewire, each tracker has a initial position and new position for each frame (demonstrated in \autoref{fig:tracking-algorithm} as large circles). The difference of each initial and updated position from the trackers is averaged, filtering small differences e.g. such as those induced by the static background. This results in an average displacement vector which represents the displacement of the guidewire. Based on the displacement vector, the imaging plane can be moved track the guidewire.
 
 \section{Results}
 
-\subsection{Artifact Simulation}
+\subsection{MRI sequence optimization}
 
-Constants similar to our real MRI sequence were initialized. The field-of-view (FOV) was chosen smaller to preserve more quality, which was later down scaled to match actual artifact size.
+A comparison and analysis in marker conspicuity for variations in slice thickness is shown for both the bSSFP and GRE sequences in \autoref{fig:MRI-sequence-optimization}. Overall, the bSSFP based images show to produce a higher SNR, and both sequences show an optimum marker CNR at a slice thickness of $d = 5$ mm, which corresponds to the approximate cross-section of the marker artefact. A larger slice thickness may be employed to reduce out-of-plane movement of the guidewire, at the cost of CNR. For imaging purposes, the optimal trade-off for slice thickness is around 10mm, as the CNR is still high and the extra thickness provides flexibility for guidewire movement.
+
+\begin{figure}
+    \centering
+    \begin{minipage}{0.241\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Conference/img/bssfp-CNR_new.png}
+        \subcaption*{(a)}
+    \end{minipage}\hfill \hspace*{0cm}
+    \begin{minipage}{0.241\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Conference/img/GRE-CNR_new.png}
+        \subcaption*{(b)}
+    \end{minipage}\hfill \hspace*{0cm}
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Conference/img/CNR-comparison2.png}
+        \subcaption*{(c)}
+    \end{minipage}\hfill \hspace*{0cm}
+    \caption{(a) Example sagittal bSSFP and (b) GRE images showing the noise ROI (green), lumen ROI (yellow) and marker ROI (red) used in contrast-to-noise (CNR) calculations. (c) Variation of marker CNR with slice thickness for both sequences.}
+    \label{fig:MRI-sequence-optimization}
+\end{figure}
+
+\subsection{Susceptibility artefact model}
+
+The parameters associated with the marker artefact were chosen to match those used experimentally, as listed in \autoref{table_MRI_parameters}. In the simulated model the field-of-view (FOV) was chosen smaller, which would later be scaled to match the actual artefact size. Additionally, the following parameters were used:
 \begin{itemize} 
     \item \(B_0\): 1.5 T
     \item \(\Delta{\chi} V\): 0.012
-    \item \(Echo Time (TE)\): 4.45 ms
-    \item \(\gamma\): 42576384.7 Hz/T
-    \item \(d\): 10 mm
+    \item \(d\): 5-30 mm
 \end{itemize}
 
-The spatial range for simulation was initialized using a 3D meshgrid, size defined by FOV. The dipole field (\ref{eq:dipole-field-distortion}) is calculated for each element and the integration (\ref{eq:integration-over-slice-formula}) is performed using the dipole field. A custom linear gray-scale colormap is applied on the resulting simulation, to get the output shown in \autoref{fig:simulations}. The superimposed simulations are compared with real artifacts in figure \autoref{fig:real-artifact-vs-simulated-comparison}.
+Using these settings, the dipole field (\autoref{eq:dipole-field-distortion}) is calculated and integrated over the slice-thickness as defined in (\autoref{eq:integration-over-slice-formula}). A linear grayscale colormap is applied on the resulting field simulation, to get the output shown in \autoref{fig:simulations}. The superimposed simulations are compared with real artefacts in figure \autoref{fig:real-artefact-vs-simulated-comparison}.
 
 \begin{figure}[h]
     \centering
@@ -232,46 +254,25 @@ The spatial range for simulation was initialized using a 3D meshgrid, size defin
         \includegraphics[width=\textwidth]{Conference/img/artifact-generated-superimposed.jpg}
         \subcaption*{(b)}
     \end{minipage}\hfill \hspace*{0cm}
-    \caption{(a) Real Artifacts
-    (b) Superimposed Simulated Artifacts}
-    \label{fig:real-artifact-vs-simulated-comparison}
+    \caption{(a) True artefacts (b) synthetically generated artefacts.}
+    \label{fig:real-artefact-vs-simulated-comparison}
 \end{figure}
 
-\subsection{CNN}
+\subsection{CNN training}
 
-Using the procedural dataset generation described in \ref{artifact-cnn-dataset}, approximately 1000 images were generated to train the CNN.
+Using the procedural dataset generation described in \ref{artefact-cnn-dataset}, approximately 1000 images were generated to train the CNN.
 
-Using the nnUNet architecture, the standard five cross-validation folds training was done, where the best performing fold was selected for inference and real-time prediction. The dataset was split 80-20 percent, where randomized 20 percent was used for validation at the end of each fold.
+Using the nnUNet architecture, a standard of five cross-validation folds was performed during training, where the best performing fold was selected for inference and real-time prediction. The dataset was randomized and split to $80/20$ \% during training and validation, respectively, at the end of each fold. The CNN was trained until approximate convergence at 100 epoch. The training achieved a pseudo-DICE score of 0.9957 and best Mean Validation Dice of 0.9974.
 
-The training model was trained until approximate convergence, at 100 epoch. Training achieved pseudo-DICE score of: 0.9957, and best Mean Validation Dice: 0.9974.
+Accuracy and latency during real-time inference can be described as sufficient. The real-time inference latency for the prediction was around 0.3 seconds on a NVIDIA RTX 3090 GPU. This time significantly increased when using slower GPUs. Most of the time, all visible non-distorted artefacts were detected. During rapid guidewire movement, disturbance caused by transient effects resulted in some detection gaps for 1-2 frames (\autoref{fig:flow-artefacts-tracking}). False positives that can not be filtered out (e.g. fixation screws discussed in \ref{guidewire-tracking}) were to be expected and were also detected by the CNN.
 
-The real-time inference latency for the prediction was around 0.3 seconds on a NVIDIA RTX 3090 GPU. This time significantly increased when using slower GPUs. 
+\subsection{Dynamic tracking performance}
 
-Accuracy during real-time inference can be described as sufficient. Most of the time, all fully-visible artifacts were detected. During rapid guidewire movement, disturbance caused by flow artifacts resulted in some detection gaps for 1-2 frames (\autoref{fig:flow-artifacts-tracking}). False positives that can not be filtered out (e.g. fixation screws discussed in \ref{guidewire-tracking}) were to be expected and were also detected by the CNN.
+Tracking slow guidewire movement was stable and accurate. As the guidewire speed increases, the transient effects become increasingly destructive, causing the tracking to lose context and re-initialize once the guidewire has slowed down enough. An example of transient effects is shown in \autoref{fig:flow-artefacts-tracking}.
 
-\subsection{Tracking and Slice alignment}
-Tracking slow guidewire movement was stable and accurate. As the guidewire speed increases, the flow artifacts become increasingly destructive due to flow artifacts, causing the tracking to lose context and re-initialize once the guidewire has slowed down enough. An example of flow artifacts is shown in \autoref{fig:flow-artifacts-tracking}.
+Tracking itself can not easily be quantified, as the accuracy is heavily dependent of the CNN. The center coordinates of each tracker is chosen to be the centroid of the detected artefact. That means, due to the slight inconsistencies of the CNN, the center coordinates can vary within the confines of the detected artefact, translating to ~$\pm$5 mm of possible fluctuation in artefact position in MRI reference axis. The fluctuation typically only applies to instable detections in areas of low SNR. Slice alignment accuracy is likely higher, as all trackers are considered for calculating the displacement vector.
 
-\begin{figure}[h]
-    \centering
-    \begin{minipage}{0.241\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{Conference/img/flow-artifact-with.jpg}
-        \subcaption*{(a)}
-    \end{minipage}\hfill \hspace*{0cm}
-    \begin{minipage}{0.241\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{Conference/img/flow-artifact-without.jpg}
-        \subcaption*{(b)}
-    \end{minipage}\hfill \hspace*{0cm}
-    \caption{(a) Flow artifacts when moving guidewire very fast
-    (b) Flow artifacts disappear a second or so after movement}
-    \label{fig:flow-artifacts-tracking}
-\end{figure}
-
-Tracking itself can not easily be quantified, as the accuracy is heavily dependent of the CNN. The center coordinates of each tracker is chosen to be the centroid of the detected artifact. That means, due to the slight inconsistencies of the CNN, the center coordinates can vary within the confines of the detected artifact, translating to ~$\pm$5 mm of possible fluctuation in artifact position in MRI reference axis. The fluctuation only applies to uncertain, low SNR or high noise detections. Slice alignment accuracy is likely higher, as all trackers are considered for movement calculations.
-
-\begin{figure}[htbp]
+\begin{figure}[ht]
     \centering
     \begin{minipage}[t]{0.49\textwidth}
         \centering
@@ -284,40 +285,52 @@ Tracking itself can not easily be quantified, as the accuracy is heavily depende
         \includegraphics[width=0.49\linewidth]{Conference/img/tracking-websocket-end.jpg}
         \vspace{0.1cm}      \includegraphics[width=0.49\linewidth]{Conference/img/tracking-websocket-tracks-end.jpg}
     \end{minipage}
-    \caption{Guidewire tracking progress. Limited to 2 trackers for visualization purposes.}
+    \caption{Guidewire tracking progress. Limited to 2 trackers for visualization purposes, 2-3 markers detected using CNN.}
     \label{fig:tracking-algorithm}
 \end{figure}
 
+\begin{figure}[ht]
+    \centering
+    \begin{minipage}{0.241\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Conference/img/flow-artifact-with.jpg}
+        \subcaption*{(a)}
+    \end{minipage}\hfill \hspace*{0cm}
+    \begin{minipage}{0.241\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Conference/img/flow-artifact-without.jpg}
+        \subcaption*{(b)}
+    \end{minipage}\hfill \hspace*{0cm}
+    \caption{(a) Transient effects when moving guidewire very fast
+    (b) Image after re-establishing steady state magnetization after movement}
+    \label{fig:flow-artefacts-tracking}
+\end{figure}
 
-\section{Discussion}
+
+\section{Discussion and Conclusion}
 
 \subsection{Summary of findings}
-Susceptibility artifact simulation was surprisingly accurate and flexible. Although the accuracy could be further improved by implementing more complex formulas for balanced Steady State Free Precession (bSSFP) as discussed in \cite{sunil-patil-phd}, the current simulation is sufficient as the susceptibility artifacts are scaled down drastically and most details are lost.
+Our physics-based approach to susceptibility artefact simulation showed to be both accurate and flexible, allowing the generation of large amounts of training data. Although the accuracy of the model might be further improved by implementing more specific signal descriptions for bSSFP as discussed in \cite{sunil-patil-phd}, the current simulation was observed to be sufficient as the susceptibility artefacts due to the relatively low spatial resolution used.
 
-Using the procedurally generated dataset can be considered a success as it did save time and effort instead of manually annotating and taking images using MRI. It also provides flexibility to train detection on existing datasets, or even specific individual. Due to the unique and uniform shape of the susceptibility artifact, the training was able to achieve a very high mean and DICE accuracy. This accuracy also translated into accurate real-time detection. 
+Using the physics-based dataset can be considered very effective as it saved the effort of manually annotating and acquiring images experimentally. It also provides flexibility to train the CNN on existing datasets, or even subject-specific data. Due to the unique and predictable shape of the susceptibility artefact, the training was able to achieve a very high mean and DICE accuracy. This accuracy also translated into accurate real-time detection.
 
-The trained CNN detection under difficult circumstances, e.g. flow artifacts and noisy images could be improved. Under optimal situations with a phantom, the detection was good and once any noise was filtered out it was nearly perfect. 
-In-vivo testing has not been done, but it can be expected that the detection accuracy will drop, as anatomy will make detection harder due to lack of contrast between the background and susceptibility artifact.
+The detection performance of the CNN could be further improved for specific circumstances, e.g. transient effects and noisy images. Under controlled conditions such as the current phantom, the detection was good and once any noise was filtered out it was nearly perfect. Further testing is required to evaluate the detection accuracy in in-vivo situations. It may be expected to drop as the surrounding anatomy will make detection harder due to lack of contrast between the background and the marker artefact.
 
-
-The ad-hoc tracking algorithm relies on the accuracy of the CNN and works well under optimal situations. The algorithm is also able to handle few difficult edge cases, e.g. artifact disappearance for up to 5 frames and can recover tracking. If the CNN detection is poor, for instance with a very low SNR image, the tracking system is not usable.
+Despite the ad-hoc nature of our tracking algorithm a smooth performance was observed under the test scenarios. Optimal tracking performance relies on the accuracy of the CNN and was found to work well under the situations explored. The algorithm was also found to be robust against cases where the guidewire approaches the edge of the lumen, leading to artefact temporarily disappearing. The dynamic tracking performance appeared to be most affected when the CNN detection performance is poor, for instance when using a very low SNR image.
 
 \subsection{Results comparison}
-Similar work to this project has been done, 
-Han Nijsink et al. used manual annotation for marker locations from a trainset of 30 images, with 10 images for validation \cite{pmid35199259}. They achieved similar results, where median number of markers detected from images was equal to the amount of markers in the images. They suggested the use of GRE sequences instead of bSSFP as used here, as GRE does not have passive banding artifacts and is less prone to flow artifacts. However during our testing, GRE sequences could not achieve the same real-time performance as bSSFP. The SNR for bSSFP sequence with a repetition time of 0.5 seconds was significantly better than GRE. However the ability to generate the training dataset procedurally gives the flexibility to switch sequence type quickly.
+Han Nijsink et al. used manual annotation for marker locations from a training dataset of 30 images, with 10 images for validation \cite{pmid35199259}. They achieved similar results, where median number of markers detected from images was equal to the amount of markers in the images. They suggested the use of GRE sequences instead of bSSFP as used here, as GRE does not have passive banding artefacts and is less prone to flow artefacts and transient effects. However during our testing, GRE sequences could not achieve the same real-time performance as bSSFP. The SNR for bSSFP sequence with a repetition time of 0.5 seconds was significantly better than GRE. In the end, the ability to synthetically generate the training dataset allows for adapting the sequence and retraining the CNN very efficiently.
 
 \subsection{Future work and current limitations}
 
-The project has addressed 3 out of 4 of the concerns raised in the introduction chapter so far. Safety aspect has not been considered yet, but could be improved by additional visualizations, for instance showing where the guidewire might be colliding with a vessel wall. This would require keeping track of the guidewire's movement in three-dimensions, as well as basic anatomy detection, such as 3D mapping vessels.
+The project has not addressed the safety aspect of MR interventions yet. Safety could be improved by additional visualizations, for instance showing where the guidewire might be colliding with a vessel wall. This would require keeping track of the guidewire's movement in three-dimensions, as well as basic anatomy detection, such as 3D mapping vessels.
 
-As the complete software system relies heavily on the CNN, improvements and stabilizing the detection even further would be beneficial. The current system is trained mostly for phantom-based images, a small subset of training data includes anatomical data, and inference on anatomical data has not been concluded. Considering the background anatomy could open up possibilities for in-vivo detection. Additionally, the detection only considers susceptibility artifacts which 
- are parallel with the \(B_0\) orientation. Oblique detection is not considered but could be beneficial. Furthermore, landmark vs segmentation approaches could be compared to find if one is better than other for this purpose.
+As the complete software system relies heavily on the CNN, improvements and stabilizing the detection even further would be beneficial. The current system is trained mostly for phantom-based images, a small subset of training data includes anatomical data, and inference on anatomical data has not been concluded. Considering the background anatomy could open up possibilities for in-vivo detection. Additionally, the detection currently only considers susceptibility artefacts which are parallel with the $B_0$ orientation. Oblique detection is not considered but could be beneficial. Furthermore, heatmap regression approaches could be considered such as those used in anatomical landmark detection.
 
- The current tracking algorithm is limited to changing MRI slice in only 2 axis (MRI X and Z). (Rotations are not supported by hardware at the moment) and moving in Y direction requires development of a three-dimensional tracking algorithm, which could understand if guidewire is going upwards or downwards from the slice. 
+The current tracking algorithm is limited to changing MRI slice in only 2 axis MRI X and Z). Moving in Y direction requires development of a three-dimensional tracking algorithm, which could understand if guidewire is going upwards or downwards from the slice. 
 
 \subsection{Conclusion}
-The project outcome is promising so far and greatly reduces the impact of the issues that have been raised regarding MRI for endovascular use. The proposed software is able to detect passive guidewire from real-time MRI sequences and is able to move the MRI slice automatically, eliminating need for manual slice alignment. Guidewire visibility is taken care of by the CNN and the used bSSFP MRI sequences are chosen to have sufficient resolution, while still being responsive enough for real-time feedback, also partly resolving the low resolution issue.
-
+Our proof-of-concept study has shown the potential of an automated passive tracking approach in the context of endovascular interventions. The proposed technique is able to detect susceptibility artefacts and dynamically track a guidewire using real-time MRI sequences, eliminating need for manual slice alignment. By optimizing the guidewire visibility, a robust detection performance of the approach was observed, while still being responsive enough for real-time feedback. This may provide a cost-effective solution to improve MR-guided interventions.
 
 % \section*{Acknowledgment}
 \bibliographystyle{vancouver}
