@@ -1,0 +1,57 @@
+
+\documentclass[final,UKenglish]{ram-report/ram-report}
+% \documentclass[lineno,UKenglish]{ram-report/ram-report}
+
+\settitle{<Title>}
+\setauthor{Martin Reinok}
+
+\input{ram-report/ram-report-settings}
+\begin{document}
+
+\makerro
+\frontmatter
+\maketitle
+
+%\includepdf{./path/to/title/page.pdf}
+\cleardoublepage
+
+\include{Summary}
+% Dutch summary is not obligatory, so not included
+%\include{Samenvatting}
+
+%In a two-sided printing style, it makes the next page a right-hand
+% (odd-numbered) page, producing a blank page if necessary.
+\cleardoublepage
+
+\tableofcontents
+
+\mainmatter
+
+\include{Thesis Report/Introduction}
+\include{Thesis Report/Background}
+\include{Thesis Report/SusceptibilitySimulationAndDetection}
+\include{Thesis Report/TrackingAndCollision}
+\include{Thesis Report/CathBotDevelopment}
+\include{Thesis Report/Discussion}
+% Assessment and results
+\include{Thesis Report/Conclusion}
+
+\include{Thesis Report/Appendix}
+
+% Appendices start here
+\appendix
+% let file name be a descriptive name, and start with app-
+\include{app-SomeDetails}
+
+% Bibliography starts here
+\backmatter
+
+% Bibliography is always the last part of a report.
+% Generate bibliography 
+\fancyhead[LO]{Bibliography}
+% Use author-year style
+\bibliographystyle{ram-report/RaM-bibtex}
+\label{ch:bib} %label to refer to
+\bibliography{Thesis Report/bibliography} 
+
+\end{document}

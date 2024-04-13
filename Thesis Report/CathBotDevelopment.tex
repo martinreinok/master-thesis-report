@@ -1,0 +1,35 @@
+\chapter{CathBot Robotic Platform Improvements and Integration}
+\label{ch:simulation-and-detection}
+
+\begin{enumerate}
+
+    \item \textbf{Issues with the original}
+    \begin{itemize} 
+        \item Unstable
+        \item Over-complicated (2 CAN-bus, Raspberry-pi etc.)
+        \item Software not easily manageable or expandable
+    \end{itemize}
+    
+    \item \textbf{Software And Hardware Improvements}
+    \begin{itemize} 
+        \item Communication reduced to single CAN bus.
+        \item Raspberry pi removed from the system altogether
+        \item Build-in PID controller used for Admittance control
+        \item Homing made easier
+        \item Master data fits in single CAN message
+        \item Ability to change Master Device resistance using external CAN-bus device.
+        \item Slave uses direct encoder values to move pneumatic motors, very direct, simple and predictable.
+    \end{itemize}
+
+    \item \textbf{Integration with CNN software}
+    \begin{itemize} 
+        \item Communication over CAN bus.
+        \item Resistance is increased or decreased depending on collision severity.
+    \end{itemize}
+    
+    \item \textbf{Improvements Results and Analysis}
+    \begin{itemize} 
+        \item Clinicians test and feedback.
+        \item With resistance and without resistance review.
+    \end{itemize}
+\end{enumerate}
