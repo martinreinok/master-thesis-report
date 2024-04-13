@@ -8,7 +8,7 @@
 % - 2013-06-xx Final version which was successfully used for 9 years by Marcel Groothuis and Maarten Bezemer
 %
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{ram-report/ram-report}[2022/06/03 Robotics and Mechatronics Report document class v0.1]
+\ProvidesClass{../ram-report/ram-report}[2022/06/03 Robotics and Mechatronics Report document class v0.1]
 
 %% Options for ram-report
 
@@ -35,7 +35,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Load generic document settings
-\input{ram-report/doc_settings.tex}
+\input{../ram-report/doc_settings.tex}
 
 %% Packages required by Reports
 \RequirePackage{ifthen}

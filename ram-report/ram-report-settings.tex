@@ -25,14 +25,14 @@
 %\usepackage{ccaption}				% Support continuation captions (eg multi-page tables)
 %\usepackage{verbatim}				% Adds verbatim environment, in which texts are exactly copied to the output
 %\usepackage{pdfpages}				% Include PDF pages/documents in the current document
-\usepackage{ram-report/requirements}
+\usepackage{../ram-report/requirements}
 
 \iffinalversion
-	\usepackage[final]{ram-report/notes}% Add note commands, [final] removes all notes from the document
-	\usepackage[final]{ram-report/rro}  % Add Rich Report Outline support, [final] removes all RRO output from document
+	\usepackage[final]{../ram-report/notes}% Add note commands, [final] removes all notes from the document
+	\usepackage[final]{../ram-report/rro}  % Add Rich Report Outline support, [final] removes all RRO output from document
 \else
-	\usepackage{ram-report/notes}       % Add note commands
-	\usepackage{ram-report/rro}         % Add Rich Report Outline support
+	\usepackage{../ram-report/notes}       % Add note commands
+	\usepackage{../ram-report/rro}         % Add Rich Report Outline support
 \fi
 
 

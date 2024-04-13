@@ -1,11 +1,11 @@
 
-\documentclass[final,UKenglish]{ram-report/ram-report}
+\documentclass[final,UKenglish]{../ram-report/ram-report}
 % \documentclass[lineno,UKenglish]{ram-report/ram-report}
 
 \settitle{<Title>}
 \setauthor{Martin Reinok}
 
-\input{ram-report/ram-report-settings}
+\input{../ram-report/ram-report-settings}
 \begin{document}
 
 \makerro
@@ -14,7 +14,10 @@
 
 %\includepdf{./path/to/title/page.pdf}
 \cleardoublepage
-
+\fasdfsdf
+asdf\asdf
+asdf\asdf
+as\defaultaddspacesdf
 \include{Summary}
 % Dutch summary is not obligatory, so not included
 %\include{Samenvatting}
@@ -27,16 +30,16 @@
 
 \mainmatter
 
-\include{Thesis Report/Introduction}
-\include{Thesis Report/Background}
-\include{Thesis Report/SusceptibilitySimulationAndDetection}
-\include{Thesis Report/TrackingAndCollision}
-\include{Thesis Report/CathBotDevelopment}
-\include{Thesis Report/Discussion}
+\include{Introduction}
+\include{Background}
+\include{SusceptibilitySimulationAndDetection}
+\include{TrackingAndCollision}
+\include{CathBotDevelopment}
+\include{Discussion}
 % Assessment and results
-\include{Thesis Report/Conclusion}
+\include{Conclusion}
 
-\include{Thesis Report/Appendix}
+\include{Appendix}
 
 % Appendices start here
 \appendix
@@ -50,8 +53,8 @@
 % Generate bibliography 
 \fancyhead[LO]{Bibliography}
 % Use author-year style
-\bibliographystyle{ram-report/RaM-bibtex}
+\bibliographystyle{../ram-report/RaM-bibtex}
 \label{ch:bib} %label to refer to
-\bibliography{Thesis Report/bibliography} 
+\bibliography{bibliography} 
 
 \end{document}
